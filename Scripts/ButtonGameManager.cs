@@ -74,6 +74,17 @@ public class ButtonGameManager : MonoBehaviour
         }
     }
 
+    public void PurchaseP2Button(){
+        if((MoneyManager.p2Money)>=(_moneyScript.GetPurchasePrice())){
+            _moneyScript.ReduceP2Money(_moneyScript.GetPurchasePrice());
+            _gameScript.RefreshP2MoneyText();
+            _gameScript.SetScene(GameManager.SCENE.P2Drop);
+        }
+        else{
+            Debug.Log("買えないよ");
+        }
+    }
+
     public void RotateLeftButton(){
         if(!GameManager.isFall){
             _gameScript.RotateCharacter(GameManager.ROTATE.Left);
@@ -90,6 +101,7 @@ public class ButtonGameManager : MonoBehaviour
         _gameScript.DropCharacter();
         if(_gameScript.GetScene()==GameManager.SCENE.P1Drop){
             _gameScript.SetScene(GameManager.SCENE.P1Check);
+            //Debug.Log("P1Check");
         }
         else if(_gameScript.GetScene()==GameManager.SCENE.P2Drop){
             _gameScript.SetScene(GameManager.SCENE.P2Check);

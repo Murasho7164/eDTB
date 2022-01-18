@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Character : MonoBehaviour
 {
-    public static List<Moving> isMoves=new List<Moving>();
+    
 
     private Rigidbody2D _rigid;
     private GameObject _gameManager;
@@ -16,25 +16,25 @@ public class Character : MonoBehaviour
         _gameManager=GameObject.Find("GameManager");
         _gameScript=_gameManager.GetComponent<GameManager>();
         _rigid=GetComponent<Rigidbody2D>();
-        isMoves.Add(moving);
+        GameManager.isMoves.Add(moving);
     }
 
     // Update is called once per frame
     void FixedUpdate()
     {
         //Debug.Log(_gameScript.GetScene());
-        if(_gameScript.GetScene()==GameManager.SCENE.P1Check||_gameScript.GetScene()==GameManager.SCENE.P1Check){
+        if(_gameScript.GetScene()==GameManager.SCENE.P1Check||_gameScript.GetScene()==GameManager.SCENE.P2Check){
             MovingCheck();
         }
         //Debug.Log(moving.isMoving);
     }
     public void MovingCheck(){
         if (_rigid.velocity.magnitude>0.01f){
-            Debug.Log("true");
+            //Debug.Log("true");
             moving.isMoving=true;
         }
         else{
-            Debug.Log("false");
+            //Debug.Log("false");
             moving.isMoving=false;
         }
     }

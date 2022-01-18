@@ -62,6 +62,7 @@ public class GameManager : MonoBehaviour
     public static bool isFall;
     public static bool dropButtonPushed;
     public static bool isGameOver=false;
+    private static string _winner;
 
     public enum ROTATE{
         Left=45,
@@ -103,6 +104,7 @@ public class GameManager : MonoBehaviour
         switch(_scene){
             case SCENE.P1Pick://Player1のピック
             canvasP1.SetActive(true);
+            _winner="Player2";
             if(_ispaid==false){
                 _moneyScript.IncreaseP1Money(_turns);
                 _ispaid=true;
@@ -129,29 +131,28 @@ public class GameManager : MonoBehaviour
             case SCENE.P1Check://Player1の動きチェック
             canvasUI.SetActive(false);
 
-            if (CheckMove(isMoves))
-            {
-                return;//移動中なら処理はここまで
-            }
             if((!CheckMove(isMoves))&&dropButtonPushed&&!isFall){
                 _droppedCharacters++;
+                _ispaid=false;
+                StartCoroutine(Wait());
                 SetScene(SCENE.P2Pick);
             }
             break;
 
-            case SCENE.P2Pick:
+            case SCENE.P2Pick://Player2のピック
             _isExisting=false;
+            _winner="Player1";
             canvasP2.SetActive(true);
             canvasP2.SetActive(true);
             if(_ispaid==false){
                 _moneyScript.IncreaseP2Money(_turns);
                 _ispaid=true;
             }
-            RefreshP1MoneyText();
+            RefreshP2MoneyText();
             break;
 
-            case SCENE.P2Drop:
-            canvasP1.SetActive(false);
+            case SCENE.P2Drop://Player2のドロップ
+            canvasP2.SetActive(false);
             canvasUI.SetActive(true);
 
             if(!_isExisting){
@@ -164,7 +165,16 @@ public class GameManager : MonoBehaviour
                 MoveCharacter();
             }
 
-            _turns++;
+            break;
+
+            case SCENE.P2Check:
+            canvasUI.SetActive(false);
+            if((!CheckMove(isMoves))&&dropButtonPushed&&!isFall){
+                _droppedCharacters++;
+                _ispaid=false;
+                _turns++;
+                SetScene(SCENE.P1Pick);
+            }
             break;
         }
 
@@ -180,6 +190,9 @@ public class GameManager : MonoBehaviour
 
     public void RefreshP1MoneyText(){
         p1MoneyText.GetComponent<Text>().text="所持金："+_moneyScript.GetP1Money().ToString()+"B";
+    }
+    public void RefreshP2MoneyText(){
+        p2MoneyText.GetComponent<Text>().text="所持金："+_moneyScript.GetP2Money().ToString()+"B";
     }
 
     public void CreateCharacter(){
@@ -224,6 +237,11 @@ public class GameManager : MonoBehaviour
         return false;
     }
 
+    public void GameOver(){
+        isGameOver=true;
+        Debug.Log("Winner:"+_winner);
+    }
+
     IEnumerator StateReset(){
         while(!isGameOver){
             yield return new WaitUntil(()=>isFall);
@@ -244,12 +262,9 @@ public class GameManager : MonoBehaviour
         }
     }
 
-
-/*     private IEnumerator WaitTime(float s)
-    {
-        Debug.Log("coroutin");
-        yield return new WaitForSeconds(s);
-        yield return null;
-    } */
+    IEnumerator Wait(){
+        Debug.Log("wait");
+        yield return new WaitForSeconds(2.0f);
+    }
 
 }

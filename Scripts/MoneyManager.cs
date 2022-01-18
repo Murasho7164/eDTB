@@ -69,7 +69,12 @@ public class MoneyManager : MonoBehaviour
         }
     }
     public void IncreaseP2Money(int n){
-        p2Money+=n;
+        if(n<5){
+            p2Money+=n*1000;
+        }
+        else {
+            p2Money+=5000;
+        }
     }
 
     public void SetPurchaseCharacter(int n){
