@@ -61,11 +61,13 @@ public class GameManager : MonoBehaviour
 
     public static bool isFall;
     public static bool dropButtonPushed;
+    public static bool isGameOver=false;
 
     public enum ROTATE{
         Left=45,
         Right=-45,
     }
+    public static List<Moving> isMoves=new List<Moving>();
 
     // Start is called before the first frame update
     void Start()
@@ -86,7 +88,8 @@ public class GameManager : MonoBehaviour
         isFall=false;
         dropButtonPushed=false;
 
-        Character.isMoves.Clear();
+        isMoves.Clear();
+        StartCoroutine(StateReset());
 
         moneyManager=GameObject.Find("MoneyManager");
         _moneyScript=moneyManager.GetComponent<MoneyManager>();
@@ -112,13 +115,9 @@ public class GameManager : MonoBehaviour
             canvasUI.SetActive(true);
 
             if(!_isExisting){
-                while(CameraController.isCollision){
-                camera.transform.Translate(0,0.1f,0);
-                _dropHeight+=0.1f;
-                }
-                if(!CameraController.isCollision){
-                    CreateCharacter();
-                }
+                StartCoroutine(GenerateCharacter());
+                _isExisting=true;
+                return;
             }
 
             if(!isFall){
@@ -127,22 +126,44 @@ public class GameManager : MonoBehaviour
 
             break;
 
-            case SCENE.P1Check:
+            case SCENE.P1Check://Player1の動きチェック
             canvasUI.SetActive(false);
 
-            if((!CheckMove(Character.isMoves))&&dropButtonPushed){
+            if (CheckMove(isMoves))
+            {
+                return;//移動中なら処理はここまで
+            }
+            if((!CheckMove(isMoves))&&dropButtonPushed&&!isFall){
                 _droppedCharacters++;
-                Debug.Log("dfm");
                 SetScene(SCENE.P2Pick);
             }
-            
             break;
 
             case SCENE.P2Pick:
-            _isExisting=true;
+            _isExisting=false;
+            canvasP2.SetActive(true);
+            canvasP2.SetActive(true);
+            if(_ispaid==false){
+                _moneyScript.IncreaseP2Money(_turns);
+                _ispaid=true;
+            }
+            RefreshP1MoneyText();
             break;
 
             case SCENE.P2Drop:
+            canvasP1.SetActive(false);
+            canvasUI.SetActive(true);
+
+            if(!_isExisting){
+                StartCoroutine(GenerateCharacter());
+                _isExisting=true;
+                return;
+            }
+
+            if(!isFall){
+                MoveCharacter();
+            }
+
             _turns++;
             break;
         }
@@ -191,17 +212,38 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public bool CheckMove(List<Moving> isMoving){
-        /* if(isMoving==null){
+    public bool CheckMove(List<Moving> isMoves){
+        if(isMoves==null){
             return false;
-        } */
-        foreach(Moving m in isMoving){
+        }
+        foreach(Moving m in isMoves){
             if(m.isMoving){
                 return true;
             }
         }
         return false;
     }
+
+    IEnumerator StateReset(){
+        while(!isGameOver){
+            yield return new WaitUntil(()=>isFall);
+            yield return new WaitForSeconds(2.0f);
+            isFall=false;
+            _isExisting=false;
+        }
+    }
+
+    IEnumerator GenerateCharacter(){
+        while(CameraController.isCollision){
+            yield return new WaitForEndOfFrame();
+            camera.transform.Translate(0,0.1f,0);
+            _dropHeight+=0.1f;
+            }
+        if(!CameraController.isCollision){
+            CreateCharacter();
+        }
+    }
+
 
 /*     private IEnumerator WaitTime(float s)
     {
