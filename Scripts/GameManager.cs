@@ -17,6 +17,7 @@ public class GameManager : MonoBehaviour
     public GameObject[] p2PriceText=new GameObject[CHARACTERS_NUM];
 
     public Camera camera;
+    public GameObject cameraController;
     private GameObject moneyManager;
 
     private MoneyManager _moneyScript;
@@ -49,7 +50,7 @@ public class GameManager : MonoBehaviour
     public SCENE _scene;
 
     public GameObject[] characters;
-    private float _dropHeight;
+    public float _dropHeight;
     private int _droppedCharacters;
     private GameObject _geneCharacter;
     private int _turns;
@@ -63,6 +64,7 @@ public class GameManager : MonoBehaviour
     public static bool dropButtonPushed;
     public static bool isGameOver=false;
     private static string _winner;
+    public bool isCheckRunning=false;
 
     public enum ROTATE{
         Left=45,
@@ -103,6 +105,8 @@ public class GameManager : MonoBehaviour
     {
         switch(_scene){
             case SCENE.P1Pick://Player1のピック
+            StopCoroutine("Check");
+            isCheckRunning=false;
             canvasP1.SetActive(true);
             _winner="Player2";
             if(_ispaid==false){
@@ -130,16 +134,14 @@ public class GameManager : MonoBehaviour
 
             case SCENE.P1Check://Player1の動きチェック
             canvasUI.SetActive(false);
-
             if((!CheckMove(isMoves))&&dropButtonPushed&&!isFall){
-                _droppedCharacters++;
-                _ispaid=false;
-                StartCoroutine(Wait());
-                SetScene(SCENE.P2Pick);
+                StartCoroutine(Check(SCENE.P2Pick));
             }
             break;
 
             case SCENE.P2Pick://Player2のピック
+            StopCoroutine("Check");
+            isCheckRunning=false;
             _isExisting=false;
             _winner="Player1";
             canvasP2.SetActive(true);
@@ -170,10 +172,8 @@ public class GameManager : MonoBehaviour
             case SCENE.P2Check:
             canvasUI.SetActive(false);
             if((!CheckMove(isMoves))&&dropButtonPushed&&!isFall){
-                _droppedCharacters++;
-                _ispaid=false;
+                StartCoroutine(Check(SCENE.P1Pick));
                 _turns++;
-                SetScene(SCENE.P1Pick);
             }
             break;
         }
@@ -189,17 +189,17 @@ public class GameManager : MonoBehaviour
     }
 
     public void RefreshP1MoneyText(){
-        p1MoneyText.GetComponent<Text>().text="所持金："+_moneyScript.GetP1Money().ToString()+"B";
+        p1MoneyText.GetComponent<Text>().text="懸賞金："+_moneyScript.GetP1Money().ToString()+"B";
     }
     public void RefreshP2MoneyText(){
-        p2MoneyText.GetComponent<Text>().text="所持金："+_moneyScript.GetP2Money().ToString()+"B";
+        p2MoneyText.GetComponent<Text>().text="懸賞金："+_moneyScript.GetP2Money().ToString()+"B";
     }
 
     public void CreateCharacter(){
         //Debug.Log((int)_pickedCharacter);
-        _geneCharacter=Instantiate(characters[(int)_pickedCharacter]);
+        _geneCharacter=Instantiate(characters[(int)_pickedCharacter],new Vector2(0,_dropHeight),Quaternion.identity);
         _geneCharacter.transform.SetParent(canvasCharacter.transform,false);
-        _geneCharacter.transform.localPosition=new Vector3(0,_dropHeight,0);
+        //_geneCharacter.transform.localPosition=new Vector3(0,_dropHeight,0);
 
         _geneCharacter.GetComponent<Rigidbody2D>().isKinematic=true;
 
@@ -254,17 +254,23 @@ public class GameManager : MonoBehaviour
     IEnumerator GenerateCharacter(){
         while(CameraController.isCollision){
             yield return new WaitForEndOfFrame();
-            camera.transform.Translate(0,0.1f,0);
-            _dropHeight+=0.1f;
+            cameraController.transform.Translate(0,0.1f,0);
+            _dropHeight+=2;
             }
         if(!CameraController.isCollision){
             CreateCharacter();
         }
     }
 
-    IEnumerator Wait(){
-        Debug.Log("wait");
+    IEnumerator Check(SCENE s){
+        if(isCheckRunning){
+            yield break;
+        }
+        isCheckRunning=true;
+        _droppedCharacters++;
+        _ispaid=false;
         yield return new WaitForSeconds(2.0f);
+        SetScene(s);
     }
 
 }
